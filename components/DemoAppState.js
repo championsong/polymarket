@@ -108,6 +108,17 @@ const defaultState = {
   notifications: createInitialNotifications(),
   alerts: createInitialAlerts(),
   savedSearches: ["BTC", "ETF", "Macro", "Sports"],
+  followedTraders: [],
+  copiedTraderWatchlists: [],
+  settings: {
+    theme: "dark",
+    notificationPrefs: {
+      fills: true,
+      alerts: true,
+      comments: true,
+      marketing: false,
+    },
+  },
   toast: null,
 };
 
@@ -120,6 +131,16 @@ function normalizePersistedState(parsed) {
     notifications: parsed.notifications ?? createInitialNotifications(),
     alerts: parsed.alerts ?? createInitialAlerts(),
     savedSearches: parsed.savedSearches ?? defaultState.savedSearches,
+    followedTraders: parsed.followedTraders ?? defaultState.followedTraders,
+    copiedTraderWatchlists: parsed.copiedTraderWatchlists ?? defaultState.copiedTraderWatchlists,
+    settings: {
+      ...defaultState.settings,
+      ...(parsed.settings ?? {}),
+      notificationPrefs: {
+        ...defaultState.settings.notificationPrefs,
+        ...(parsed.settings?.notificationPrefs ?? {}),
+      },
+    },
   };
 }
 
@@ -161,6 +182,11 @@ export function DemoAppProvider({ children }) {
     if (!hydrated) return;
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }, [hydrated, state]);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.documentElement.dataset.theme = state.settings?.theme ?? "dark";
+  }, [state.settings]);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -483,6 +509,97 @@ export function DemoAppProvider({ children }) {
         setState((current) => ({
           ...current,
           savedSearches: current.savedSearches.filter((item) => item !== query),
+        }));
+      },
+      toggleFollowTrader(trader) {
+        setState((current) => {
+          const exists = current.followedTraders.includes(trader.handle);
+          return {
+            ...current,
+            followedTraders: exists
+              ? current.followedTraders.filter((item) => item !== trader.handle)
+              : [trader.handle, ...current.followedTraders].slice(0, 24),
+            notifications: [
+              {
+                id: `n-${Date.now()}`,
+                title: { zh: exists ? "已取消关注交易员" : "已关注交易员", en: exists ? "Unfollowed trader" : "Followed trader" },
+                body: {
+                  zh: `${trader.name} ${exists ? "已从关注列表移除。" : "已加入你的关注列表。"}`,
+                  en: `${trader.name} ${exists ? "was removed from your follow list." : "was added to your follow list."}`,
+                },
+                read: false,
+                time: { zh: "刚刚", en: "Just now" },
+              },
+              ...current.notifications,
+            ].slice(0, 12),
+            toast: makeToast(
+              "info",
+              exists ? `已取消关注 ${trader.name}。` : `已关注 ${trader.name}。`,
+              exists ? `Unfollowed ${trader.name}.` : `Followed ${trader.name}.`,
+            ),
+          };
+        });
+      },
+      copyTraderWatchlist(trader, items) {
+        setState((current) => {
+          const existingNames = new Set(current.watchlist.map((item) => item.name));
+          const nextWatch = [
+            ...items
+              .filter(Boolean)
+              .map((market) => ({
+                marketSlug: market.slug,
+                name: localizeMarket(market, "zh").shortName,
+                note: localizeMarket(market, "zh").summary,
+                price: formatCents(market.yesPrice),
+                change: market.change,
+              }))
+              .filter((item) => !existingNames.has(item.name)),
+            ...current.watchlist,
+          ].slice(0, 12);
+
+          return {
+            ...current,
+            watchlist: nextWatch,
+            portfolioWatch: nextWatch,
+            copiedTraderWatchlists: [trader.handle, ...current.copiedTraderWatchlists.filter((item) => item !== trader.handle)].slice(0, 12),
+            notifications: [
+              {
+                id: `n-${Date.now()}`,
+                title: { zh: "已复制观察列表", en: "Watchlist copied" },
+                body: { zh: `已导入 ${trader.name} 的关注市场。`, en: `Imported watched markets from ${trader.name}.` },
+                read: false,
+                time: { zh: "刚刚", en: "Just now" },
+              },
+              ...current.notifications,
+            ].slice(0, 12),
+            toast: makeToast("success", `已复制 ${trader.name} 的观察列表。`, `Copied ${trader.name}'s watchlist.`),
+          };
+        });
+      },
+      updateSettings(patch) {
+        setState((current) => ({
+          ...current,
+          settings: {
+            ...current.settings,
+            ...patch,
+            notificationPrefs: {
+              ...current.settings.notificationPrefs,
+              ...(patch.notificationPrefs ?? {}),
+            },
+          },
+          toast: makeToast("info", "偏好已更新。", "Preferences updated."),
+        }));
+      },
+      toggleNotificationPref(key) {
+        setState((current) => ({
+          ...current,
+          settings: {
+            ...current.settings,
+            notificationPrefs: {
+              ...current.settings.notificationPrefs,
+              [key]: !current.settings.notificationPrefs[key],
+            },
+          },
         }));
       },
       createAlert({ marketSlug, label, threshold }) {

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { leaderboard, marketCategories, markets, tickerItems } from "../data/markets";
+import { traderProfiles } from "../data/traders";
 import { useDemoAppState } from "./DemoAppState";
 import { localeOptions, localizeMarket, localizeTickerItem, t } from "./i18n";
 import { MarketChartCard, ProbabilityLineChart } from "./MarketChart";
@@ -142,6 +143,10 @@ function Sidebar({ onWalletClick }) {
         <Link href="/search">{t(locale, "search")}</Link>
         <Link href="/explore">{t(locale, "explore")}</Link>
         <Link href="/portfolio">{t(locale, "portfolio")}</Link>
+        <Link href="/leaderboard">{locale === "zh" ? "排行榜" : "Leaderboard"}</Link>
+        <Link href="/notifications">{locale === "zh" ? "通知中心" : "Notifications"}</Link>
+        <Link href="/profile">{locale === "zh" ? "个人资料" : "Profile"}</Link>
+        <Link href="/settings">{locale === "zh" ? "设置" : "Settings"}</Link>
         <Link href="/category/crypto">{t(locale, "crypto")}</Link>
         <Link href="/category/macro">{t(locale, "macro")}</Link>
       </nav>
@@ -195,8 +200,14 @@ function Header({ onWalletClick, onNotificationsClick }) {
         <Link className="ghost-button header-link" href="/portfolio">
           {t(locale, "portfolio")}
         </Link>
-        <Link className="ghost-button header-link" href="/search">
-          {t(locale, "search")}
+        <Link className="ghost-button header-link" href="/leaderboard">
+          {locale === "zh" ? "排行榜" : "Leaderboard"}
+        </Link>
+        <Link className="ghost-button header-link" href="/notifications">
+          {locale === "zh" ? "通知" : "Notifications"}
+        </Link>
+        <Link className="ghost-button header-link" href="/settings">
+          {locale === "zh" ? "设置" : "Settings"}
         </Link>
       </div>
       {toast ? (
@@ -296,7 +307,17 @@ function MarketList() {
       <div className="chart-toolbar">
         {marketCategories.map((category) => (
           <button className={`pill chart-pill ${filter === category.id ? "active" : ""}`} key={category.id} onClick={() => setFilter(category.id)} type="button">
-            {category.id === "all" ? t(locale, "all") : (category.id === "crypto" ? t(locale, "crypto") : category.id === "macro" ? t(locale, "macro") : locale === "zh" ? category.label : category.id === "sports" ? "Sports" : "Culture")}
+            {category.id === "all"
+              ? t(locale, "all")
+              : category.id === "crypto"
+                ? t(locale, "crypto")
+                : category.id === "macro"
+                  ? t(locale, "macro")
+                  : locale === "zh"
+                    ? category.label
+                    : category.id === "sports"
+                      ? "Sports"
+                      : "Culture"}
           </button>
         ))}
       </div>
@@ -313,7 +334,7 @@ function MarketList() {
               <h3>{localized.title}</h3>
               <p>{localized.summary}</p>
               <div className="market-meta">
-                <span>{localized.probability ?? market.probability}%</span>
+                <span>{market.probability}%</span>
                 <span>{market.change}</span>
                 <span>{market.expiresAt}</span>
               </div>
@@ -364,17 +385,20 @@ function LeaderboardPanel() {
           <p className="eyebrow">{t(locale, "leaderboard")}</p>
           <h2>{t(locale, "leaderboardTitle")}</h2>
         </div>
+        <Link className="ghost-button small-button" href="/leaderboard">
+          {locale === "zh" ? "查看全部" : "View all"}
+        </Link>
       </div>
       <div className="stack-list">
         {leaderboard.map((item) => (
-          <div className="leader-row" key={item.rank}>
+          <Link className="leader-row" href={`/traders/${traderProfiles[Number(item.rank) - 1]?.slug ?? "macro_liu"}`} key={item.rank}>
             <strong>{item.rank}</strong>
             <div className="leader-copy">
               <strong>{item.name}</strong>
               <span className="muted-text">{item.winRate}</span>
             </div>
             <strong className="positive">{item.profit}</strong>
-          </div>
+          </Link>
         ))}
       </div>
     </section>

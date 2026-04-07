@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { InteractivePriceChart } from "./MarketChart";
 import { useDemoAppState } from "./DemoAppState";
@@ -295,8 +296,12 @@ export function CommentsFeedPanel({ slug }) {
               <div className="comment-avatar">{comment.avatar}</div>
               <div className="comment-body">
                 <div className="comment-topline">
-                  <strong>{comment.user}</strong>
-                  <span className="muted-text">{comment.handle}</span>
+                  <Link className="comment-author-link" href={`/traders/${String(comment.handle ?? "").replace("@", "")}`}>
+                    <strong>{comment.user}</strong>
+                  </Link>
+                  <Link className="muted-text comment-handle-link" href={`/traders/${String(comment.handle ?? "").replace("@", "")}`}>
+                    {comment.handle}
+                  </Link>
                   <span className="muted-text">{pickLocale(locale, comment.time)}</span>
                 </div>
                 <div className="comment-badges">
@@ -337,7 +342,9 @@ export function CommentsFeedPanel({ slug }) {
                     {comment.replies.map((reply) => (
                       <div className="reply-item" key={reply.id}>
                         <div className="panel-header">
-                          <strong>{reply.user}</strong>
+                          <Link className="comment-author-link" href={`/traders/${String(reply.handle ?? "@pulse_demo").replace("@", "")}`}>
+                            <strong>{reply.user}</strong>
+                          </Link>
                           <span className="muted-text">
                             {reply.handle} · {pickLocale(locale, reply.time)}
                           </span>
