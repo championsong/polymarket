@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { InteractivePriceChart } from "./MarketChart";
 import { useDemoAppState } from "./DemoAppState";
 import { t } from "./i18n";
+import { getTraderBySlug } from "../data/traders";
 
 function pickLocale(locale, value) {
   if (value && typeof value === "object" && !Array.isArray(value) && (value.zh || value.en)) {
@@ -14,10 +15,10 @@ function pickLocale(locale, value) {
 }
 
 export function OrderEntryPanel({ market }) {
-  const { locale, placeOrder, closePosition, toggleWatchlist, watchlist, walletConnected, connectWallet, user, signIn, marketMarks, createAlert } =
+  const { locale, placeOrder, closePosition, toggleWatchlist, watchlist, walletConnected, connectWallet, user, signIn, marketMarks, createAlert, settings } =
     useDemoAppState();
   const [side, setSide] = useState("yes");
-  const [amount, setAmount] = useState(200);
+  const [amount, setAmount] = useState(settings?.defaultTradeSize ?? 200);
   const [mode, setMode] = useState("buy");
   const [message, setMessage] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -242,6 +243,7 @@ export function CommentsFeedPanel({ slug }) {
   const [replyTarget, setReplyTarget] = useState(null);
   const [collapsed, setCollapsed] = useState({});
   const [sortBy, setSortBy] = useState("top");
+  const [hoveredTrader, setHoveredTrader] = useState(null);
 
   const items = useMemo(() => {
     const current = [...(comments[slug] ?? [])];
@@ -297,7 +299,12 @@ export function CommentsFeedPanel({ slug }) {
               <div className="comment-body">
                 <div className="comment-topline">
                   <Link className="comment-author-link" href={`/traders/${String(comment.handle ?? "").replace("@", "")}`}>
-                    <strong>{comment.user}</strong>
+                    <strong
+                      onMouseEnter={() => setHoveredTrader(getTraderBySlug(String(comment.handle ?? "").replace("@", "")))}
+                      onMouseLeave={() => setHoveredTrader(null)}
+                    >
+                      {comment.user}
+                    </strong>
                   </Link>
                   <Link className="muted-text comment-handle-link" href={`/traders/${String(comment.handle ?? "").replace("@", "")}`}>
                     {comment.handle}
@@ -314,6 +321,15 @@ export function CommentsFeedPanel({ slug }) {
                   {comment.pinned ? <span className="comment-badge">Pinned</span> : null}
                   {comment.optimistic ? <span className="comment-badge">Posting</span> : null}
                 </div>
+                {hoveredTrader && hoveredTrader.handle === comment.handle ? (
+                  <div className="trader-preview-card">
+                    <div className="panel-header">
+                      <strong>{hoveredTrader.name}</strong>
+                      <span className="comment-pnl">{hoveredTrader.pnl}</span>
+                    </div>
+                    <span className="muted-text">{locale === "zh" ? hoveredTrader.bioZh : hoveredTrader.bioEn}</span>
+                  </div>
+                ) : null}
                 <p>{pickLocale(locale, comment.text)}</p>
                 <div className="comment-actions-row">
                   <button className="ghost-button small-button" onClick={() => likeComment({ slug, commentId: comment.id })} type="button">

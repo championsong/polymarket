@@ -110,8 +110,14 @@ const defaultState = {
   savedSearches: ["BTC", "ETF", "Macro", "Sports"],
   followedTraders: [],
   copiedTraderWatchlists: [],
+  watchFolders: {
+    core: { id: "core", name: { zh: "核心观察", en: "Core Watch" }, marketSlugs: ["btc-above-750k", "fed-june-signal"] },
+    event: { id: "event", name: { zh: "事件驱动", en: "Event Driven" }, marketSlugs: ["finals-under-6", "spring-festival-box-office"] },
+  },
   settings: {
     theme: "dark",
+    compactMode: false,
+    defaultTradeSize: 200,
     notificationPrefs: {
       fills: true,
       alerts: true,
@@ -133,6 +139,7 @@ function normalizePersistedState(parsed) {
     savedSearches: parsed.savedSearches ?? defaultState.savedSearches,
     followedTraders: parsed.followedTraders ?? defaultState.followedTraders,
     copiedTraderWatchlists: parsed.copiedTraderWatchlists ?? defaultState.copiedTraderWatchlists,
+    watchFolders: parsed.watchFolders ?? defaultState.watchFolders,
     settings: {
       ...defaultState.settings,
       ...(parsed.settings ?? {}),
@@ -187,6 +194,11 @@ export function DemoAppProvider({ children }) {
     if (typeof document === "undefined") return;
     document.documentElement.dataset.theme = state.settings?.theme ?? "dark";
   }, [state.settings]);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.documentElement.dataset.compact = state.settings?.compactMode ? "true" : "false";
+  }, [state.settings?.compactMode]);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -293,6 +305,87 @@ export function DemoAppProvider({ children }) {
             toast: exists
               ? makeToast("info", t("zh", "removedWatchlist"), t("en", "removedWatchlist"))
               : makeToast("info", t("zh", "addedWatchlist"), t("en", "addedWatchlist")),
+          };
+        });
+      },
+      moveWatchlistItem({ marketSlug, folderId }) {
+        setState((current) => {
+          const nextFolders = Object.fromEntries(
+            Object.entries(current.watchFolders).map(([id, folder]) => [
+              id,
+              {
+                ...folder,
+                marketSlugs:
+                  id === folderId
+                    ? Array.from(new Set([...(folder.marketSlugs ?? []), marketSlug]))
+                    : (folder.marketSlugs ?? []).filter((slug) => slug !== marketSlug),
+              },
+            ]),
+          );
+          return {
+            ...current,
+            watchFolders: nextFolders,
+            toast: makeToast("info", "观察列表文件夹已更新。", "Watchlist folder updated."),
+          };
+        });
+      },
+      reorderWatchlistItem({ fromIndex, toIndex }) {
+        setState((current) => {
+          if (fromIndex === toIndex) return current;
+          if (fromIndex < 0 || toIndex < 0 || fromIndex >= current.watchlist.length || toIndex >= current.watchlist.length) return current;
+
+          const nextWatchlist = [...current.watchlist];
+          const [moved] = nextWatchlist.splice(fromIndex, 1);
+          nextWatchlist.splice(toIndex, 0, moved);
+
+          return {
+            ...current,
+            watchlist: nextWatchlist,
+            portfolioWatch: nextWatchlist,
+            toast: makeToast("info", "瑙傚療鍒楄〃椤哄簭宸叉洿鏂般€?", "Watchlist order updated."),
+          };
+        });
+      },
+      createWatchFolder(name) {
+        if (!name?.trim()) return;
+        setState((current) => {
+          const id = `folder-${Date.now()}`;
+          return {
+            ...current,
+            watchFolders: {
+              ...current.watchFolders,
+              [id]: { id, name: { zh: name.trim(), en: name.trim() }, marketSlugs: [] },
+            },
+            toast: makeToast("success", `已创建文件夹 ${name.trim()}。`, `Created folder ${name.trim()}.`),
+          };
+        });
+      },
+      renameWatchFolder({ folderId, name }) {
+        if (!name?.trim()) return;
+        setState((current) => {
+          const folder = current.watchFolders[folderId];
+          if (!folder) return current;
+          return {
+            ...current,
+            watchFolders: {
+              ...current.watchFolders,
+              [folderId]: {
+                ...folder,
+                name: { zh: name.trim(), en: name.trim() },
+              },
+            },
+            toast: makeToast("info", `已重命名文件夹 ${name.trim()}。`, `Renamed folder to ${name.trim()}.`),
+          };
+        });
+      },
+      deleteWatchFolder(folderId) {
+        setState((current) => {
+          if (!current.watchFolders[folderId]) return current;
+          const nextFolders = Object.fromEntries(Object.entries(current.watchFolders).filter(([id]) => id !== folderId));
+          return {
+            ...current,
+            watchFolders: Object.keys(nextFolders).length ? nextFolders : defaultState.watchFolders,
+            toast: makeToast("info", "已删除文件夹。", "Folder deleted."),
           };
         });
       },

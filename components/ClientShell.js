@@ -144,6 +144,7 @@ function Sidebar({ onWalletClick }) {
         <Link href="/explore">{t(locale, "explore")}</Link>
         <Link href="/portfolio">{t(locale, "portfolio")}</Link>
         <Link href="/leaderboard">{locale === "zh" ? "排行榜" : "Leaderboard"}</Link>
+        <Link href="/compare">{locale === "zh" ? "交易员对比" : "Compare"}</Link>
         <Link href="/notifications">{locale === "zh" ? "通知中心" : "Notifications"}</Link>
         <Link href="/profile">{locale === "zh" ? "个人资料" : "Profile"}</Link>
         <Link href="/settings">{locale === "zh" ? "设置" : "Settings"}</Link>
@@ -202,6 +203,9 @@ function Header({ onWalletClick, onNotificationsClick }) {
         </Link>
         <Link className="ghost-button header-link" href="/leaderboard">
           {locale === "zh" ? "排行榜" : "Leaderboard"}
+        </Link>
+        <Link className="ghost-button header-link" href="/compare">
+          {locale === "zh" ? "交易员对比" : "Compare"}
         </Link>
         <Link className="ghost-button header-link" href="/notifications">
           {locale === "zh" ? "通知" : "Notifications"}

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { MarketShell } from "./ClientShell";
 import { useDemoAppState } from "./DemoAppState";
-import { TraderActionPanel, TraderActivityFeed, TraderFavoriteMarkets } from "./TraderPanels";
+import { TraderActionPanel, TraderActivityFeed, TraderFavoriteMarkets, TraderPositionsPanel } from "./TraderPanels";
 import { getTraderBySlug } from "../data/traders";
 
 export default function TraderProfilePage({ handle }) {
@@ -81,6 +81,7 @@ export default function TraderProfilePage({ handle }) {
 
       <section className="detail-grid">
         <div className="detail-main">
+          <TraderPositionsPanel trader={trader} />
           <TraderActivityFeed trader={trader} />
         </div>
         <div className="detail-side">

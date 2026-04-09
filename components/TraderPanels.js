@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useDemoAppState } from "./DemoAppState";
 import { localizeMarket } from "./i18n";
 import { markets } from "../data/markets";
+import { traderPositionsBySlug } from "../data/traders";
 
 function buildTraderActivity(trader, locale) {
   const activities = [
@@ -116,6 +117,39 @@ export function TraderFavoriteMarkets({ trader }) {
               </div>
               <span className="muted-text">{localized.summary}</span>
             </Link>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+export function TraderPositionsPanel({ trader }) {
+  const { locale } = useDemoAppState();
+  const rows = traderPositionsBySlug[trader.slug] ?? [];
+
+  return (
+    <section className="panel">
+      <div className="section-header">
+        <div>
+          <p className="eyebrow">{locale === "zh" ? "仓位" : "Positions"}</p>
+          <h2>{locale === "zh" ? "交易员持仓与盈亏" : "Positions and PnL"}</h2>
+        </div>
+      </div>
+      <div className="stack-list">
+        {rows.map((row) => {
+          const market = markets.find((item) => item.slug === row.marketSlug);
+          const localized = market ? localizeMarket(market, locale) : null;
+          return (
+            <div className="stack-item" key={`${trader.slug}-${row.marketSlug}-${row.side}`}>
+              <div className="panel-header">
+                <strong>{localized?.shortName ?? row.marketSlug}</strong>
+                <span className={row.pnl.startsWith("+") ? "positive" : "negative"}>{row.pnl}</span>
+              </div>
+              <span className="muted-text">
+                {row.side} · Avg {row.avg} · Mark {row.mark} · {row.shares} shares
+              </span>
+            </div>
           );
         })}
       </div>

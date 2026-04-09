@@ -8,8 +8,10 @@ const themeOptions = [
   { id: "light", zh: "亮色", en: "Light" },
 ];
 
+const tradeSizes = [100, 200, 500, 1000];
+
 export default function SettingsPage() {
-  const { locale, settings, updateSettings, toggleNotificationPref } = useDemoAppState();
+  const { locale, setLocale, settings, updateSettings, toggleNotificationPref } = useDemoAppState();
 
   return (
     <MarketShell>
@@ -18,11 +20,11 @@ export default function SettingsPage() {
           <div className="panel-header">
             <span className="category-tag">{locale === "zh" ? "设置" : "Settings"}</span>
           </div>
-          <h2>{locale === "zh" ? "主题与通知偏好" : "Theme and notification preferences"}</h2>
+          <h2>{locale === "zh" ? "主题、语言与通知偏好" : "Theme, language, and notification preferences"}</h2>
           <p>
             {locale === "zh"
-              ? "这里的设置会保存在本地，包括站点主题和你想接收的通知类型。"
-              : "Preferences are stored locally, including your site theme and the types of notifications you want to receive."}
+              ? "这里的设置会保存在本地，包括界面主题、语言、紧凑模式、默认下单金额和通知类型。"
+              : "Preferences are stored locally, including theme, language, compact mode, default trade size, and notification types."}
           </p>
         </div>
       </section>
@@ -49,9 +51,65 @@ export default function SettingsPage() {
               ))}
             </div>
           </section>
+
+          <section className="panel">
+            <div className="section-header">
+              <div>
+                <p className="eyebrow">{locale === "zh" ? "语言" : "Language"}</p>
+                <h2>{locale === "zh" ? "界面语言" : "Interface language"}</h2>
+              </div>
+            </div>
+            <div className="chart-toolbar">
+              {[
+                { id: "zh", label: "中文" },
+                { id: "en", label: "EN" },
+              ].map((option) => (
+                <button className={`pill chart-pill ${locale === option.id ? "active" : ""}`} key={option.id} onClick={() => setLocale(option.id)} type="button">
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </section>
         </div>
 
         <div className="detail-side">
+          <section className="panel">
+            <div className="section-header">
+              <div>
+                <p className="eyebrow">{locale === "zh" ? "布局" : "Layout"}</p>
+                <h2>{locale === "zh" ? "紧凑模式" : "Compact mode"}</h2>
+              </div>
+            </div>
+            <button className="stack-item pref-row" onClick={() => updateSettings({ compactMode: !settings.compactMode })} type="button">
+              <div>
+                <strong>{locale === "zh" ? "启用更紧凑的信息密度" : "Use denser spacing"}</strong>
+                <span className="muted-text">{settings.compactMode ? (locale === "zh" ? "已开启" : "Enabled") : locale === "zh" ? "已关闭" : "Disabled"}</span>
+              </div>
+              <span className={`mini-badge ${settings.compactMode ? "" : "neutral-badge"}`}>{settings.compactMode ? "On" : "Off"}</span>
+            </button>
+          </section>
+
+          <section className="panel">
+            <div className="section-header">
+              <div>
+                <p className="eyebrow">{locale === "zh" ? "交易" : "Trading"}</p>
+                <h2>{locale === "zh" ? "默认下单金额" : "Default trade size"}</h2>
+              </div>
+            </div>
+            <div className="chart-toolbar">
+              {tradeSizes.map((size) => (
+                <button
+                  className={`pill chart-pill ${settings.defaultTradeSize === size ? "active" : ""}`}
+                  key={size}
+                  onClick={() => updateSettings({ defaultTradeSize: size })}
+                  type="button"
+                >
+                  ¥{size}
+                </button>
+              ))}
+            </div>
+          </section>
+
           <section className="panel">
             <div className="section-header">
               <div>
@@ -71,9 +129,7 @@ export default function SettingsPage() {
                     <strong>{locale === "zh" ? item.zh : item.en}</strong>
                     <span className="muted-text">{settings.notificationPrefs[item.key] ? (locale === "zh" ? "已开启" : "Enabled") : locale === "zh" ? "已关闭" : "Disabled"}</span>
                   </div>
-                  <span className={`mini-badge ${settings.notificationPrefs[item.key] ? "" : "neutral-badge"}`}>
-                    {settings.notificationPrefs[item.key] ? "On" : "Off"}
-                  </span>
+                  <span className={`mini-badge ${settings.notificationPrefs[item.key] ? "" : "neutral-badge"}`}>{settings.notificationPrefs[item.key] ? "On" : "Off"}</span>
                 </button>
               ))}
             </div>
